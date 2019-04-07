@@ -9,7 +9,6 @@ class Command(Enum):
     addMember = 1
     initial = 2
     recordLeaving = 3
-    rr = 4
 
 def main():
     print(sys.argv[0])
