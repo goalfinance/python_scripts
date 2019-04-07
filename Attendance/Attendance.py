@@ -4,10 +4,12 @@ import os
 import openpyxl
 from enum import Enum
 
+
 class Command(Enum):
     addMember = 1
     initial = 2
     recordLeaving = 3
+    rr = 4
 
 def main():
     print(sys.argv[0])
@@ -51,7 +53,7 @@ def main():
         book = openpyxl.Workbook(write_only=True)
         book.save(file_name)
     
-
+    
     book.save(file_name)
 
 
