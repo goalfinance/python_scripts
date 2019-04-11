@@ -3,6 +3,7 @@ import time
 import os
 import openpyxl
 from enum import Enum
+import re
 
 class Command(Enum):
     addMember = 1
@@ -29,6 +30,40 @@ const.EXCEL_WORKBOOK_MEMBER_SHEET_NAME = 'member list'
 
 app_params = dict(member_name="", leaving_date="", file_name="")
 
+def month_to_str(month):
+    month_str = str(month)
+    if len(month_str) < 2:
+        month_str = '0' + month_str 
+    return month_str
+
+#Check if the sheet for the month exists
+def does_monsheet_exist(workbook, mon):
+    month_str = month_to_str(mon)
+    sheet_names = workbook.get_sheet_names()
+    for sheet_name in sheet_names:
+        if sheet_name == month_str:
+            return True
+    
+    return False
+
+def get_month_sheet(workbook, mon):
+    month_str = month_to_str(mon)
+    if does_monsheet_exist(workbook, mon) == True:
+        return workbook.get_sheet_by_name(month_str)
+    else:
+        return None
+
+def get_current_month_num():
+    localtime = time.localtime(time.time())
+    return localtime.tm_mon
+
+def get_previous_month_num():
+    current_month_num = get_current_month_num()
+    previous_month_num = current_month_num - 1
+    if previous_month_num < 1 :
+        previous_month_num = 12
+    return previous_month_num
+
 def perform_add_member(workbook, app_params):
     member_name = app_params[const.APP_PARAMS_MEMBER_NAME]
     if member_name == None or member_name == '':
@@ -42,7 +77,29 @@ def perform_add_member(workbook, app_params):
     member_list_sheet.append(new_row)
     workbook.save(app_params[const.APP_PARAMS_FILE_NAME])
 
+def does_member_exist(workbook, member_name):
+    try:
+        member_list_sheet = workbook.get_sheet_by_name(const.EXCEL_WORKBOOK_MEMBER_SHEET_NAME)
+        for row in member_list_sheet.rows:
+            if re.search(member_name, row[0].value, re.IGNORECASE) != None:
+                return True
+        return True
+    except KeyError:
+        return False
+
+
+def perform_initial_attendance(workbook, member_name, month):
+    month_sheet = get_month_sheet(workbook, month)
+    if month_sheet == None:
+        month_sheet = workbook.create_sheet(month_to_str(month))
     
+    if does_member_exist(workbook, member_name) == False:
+        print("The member whose name is '" + member_name + "' doesn't exist in the member list, you can add member by option '-a'")
+        return
+    
+    
+
+
 
 
 def main():
