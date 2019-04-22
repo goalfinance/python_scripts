@@ -97,7 +97,12 @@ def perform_initial_attendance(workbook, member_name, month):
         print("The member whose name is '" + member_name + "' doesn't exist in the member list, you can add member by option '-a'")
         return
     
-    
+    for row in month_sheet.rows:
+        if re.search(member_name, row[0].value, re.IGNORECASE) == None:
+            pass
+
+    workbook.save(app_params[const.APP_PARAMS_FILE_NAME])
+
 
 
 
@@ -150,6 +155,8 @@ def main():
     
     if command == Command.addMember:
         perform_add_member(book, app_params)
+    elif command == Command.initial:
+        perform_initial_attendance(book, app_params)
 
 
 
