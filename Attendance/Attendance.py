@@ -130,7 +130,7 @@ def main():
         elif o in ("-r"):
             command = Command.recordLeaving
     
-    
+    leaving_date = None
     if app_params[const.APP_PARAMS_LEAVING_DATE] != None and app_params[const.APP_PARAMS_LEAVING_DATE] != "":
         try:
             leaving_date = time.strptime(app_params[const.APP_PARAMS_LEAVING_DATE], "%Y-%m-%d")
@@ -156,7 +156,7 @@ def main():
     if command == Command.addMember:
         perform_add_member(book, app_params)
     elif command == Command.initial:
-        perform_initial_attendance(book, app_params)
+        perform_initial_attendance(book, app_params[const.APP_PARAMS_MEMBER_NAME], leaving_date.tm_mon)
 
 
 
