@@ -4,6 +4,7 @@ import os
 import openpyxl
 from enum import Enum
 import re
+import calendar
 
 class Command(Enum):
     addMember = 1
@@ -87,7 +88,28 @@ def does_member_exist(workbook, member_name):
     except KeyError:
         return False
 
-def create_table_header(worksheet):
+def get_calendar_of_month(year, month):
+    calendar_of_month = []
+    days_of_month = calendar.monthrange(year, month)[1]
+    for i in range(1, days_of_month + 1):
+        calendar_info = ()
+        weekday = calendar.weekday(year, month, i)
+        isHoliday = False
+        if weekday in [5, 6]:
+            isHoliday = True
+        calendar_info = weekday, i, isHoliday
+        calendar_of_month.append(calendar_info)
+    return calendar_of_month
+
+def create_table_header(worksheet, year, month):
+    calendar_of_month = get_calendar_of_month(year, month)
+    headers = ['Name', 'Attentance days of month']
+    for calendar_info in calendar_of_month:
+        headers.append(calendar_info[2])
+    
+    worksheet.append(headers)
+
+
     
     
 def perform_initial_attendance(workbook, member_name, month):
