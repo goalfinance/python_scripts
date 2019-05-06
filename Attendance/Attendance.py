@@ -87,19 +87,24 @@ def does_member_exist(workbook, member_name):
     except KeyError:
         return False
 
-
+def create_table_header(worksheet):
+    
+    
 def perform_initial_attendance(workbook, member_name, month):
     month_sheet = get_month_sheet(workbook, month)
     if month_sheet == None:
         month_sheet = workbook.create_sheet(month_to_str(month))
     
-    if does_member_exist(workbook, member_name) == False:
-        print("The member whose name is '" + member_name + "' doesn't exist in the member list, you can add member by option '-a'")
-        return
-    
-    for row in month_sheet.rows:
-        if re.search(member_name, row[0].value, re.IGNORECASE) == None:
-            pass
+    if month_sheet.max_row <= 0:
+        pass
+    else:
+        if does_member_exist(workbook, member_name) == False:
+            print("The member whose name is '" + member_name + "' doesn't exist in the member list, you can add member by option '-a'")
+            return
+        
+        for row in month_sheet.rows:
+            if re.search(member_name, row[0].value, re.IGNORECASE) == None:
+                pass
 
     workbook.save(app_params[const.APP_PARAMS_FILE_NAME])
 
