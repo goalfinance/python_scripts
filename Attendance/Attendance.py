@@ -27,7 +27,10 @@ const = _const()
 const.APP_PARAMS_MEMBER_NAME = 'member_name'
 const.APP_PARAMS_LEAVING_DATE = 'leaving_date'
 const.APP_PARAMS_FILE_NAME = 'file_name'
+const.APP_PARAMS_INITIAL_DATE = 'initial_date'
 const.EXCEL_WORKBOOK_MEMBER_SHEET_NAME = 'member list'
+const.EXCEL_TABLE_HEADER_MEMBER_NAME = 'Name'
+const.EXCEL_TABLE_HEADER_ATTENDANCE_DAYS = 'Attentance days of month'
 
 app_params = dict(member_name="", leaving_date="", file_name="")
 
@@ -103,22 +106,25 @@ def get_calendar_of_month(year, month):
 
 def create_table_header(worksheet, year, month):
     calendar_of_month = get_calendar_of_month(year, month)
-    headers = ['Name', 'Attentance days of month']
+    headers = [const.EXCEL_TABLE_HEADER_MEMBER_NAME, const.EXCEL_TABLE_HEADER_ATTENDANCE_DAYS]
     for calendar_info in calendar_of_month:
         headers.append(calendar_info[2])
     
     worksheet.append(headers)
 
+def insert_new_attendance_info(workbook, member_name, year, month):
+    calendar_of_month = get_calendar_of_month(year, month)
+    attendance_record = [member_name]
 
     
     
-def perform_initial_attendance(workbook, member_name, month):
+def perform_initial_attendance(workbook, member_name, year, month):
     month_sheet = get_month_sheet(workbook, month)
     if month_sheet == None:
         month_sheet = workbook.create_sheet(month_to_str(month))
     
     if month_sheet.max_row <= 0:
-        pass
+        create_table_header(month_sheet, year, month)
     else:
         if does_member_exist(workbook, member_name) == False:
             print("The member whose name is '" + member_name + "' doesn't exist in the member list, you can add member by option '-a'")
@@ -137,7 +143,7 @@ def perform_initial_attendance(workbook, member_name, month):
 def main():
     print(sys.argv[0])
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "airm:l:f:", ["member_name=", "leaving_date=", "file"])
+        opts, args = getopt.getopt(sys.argv[1:], "airm:l:f:d:", ["member_name=", "leaving_date=", "file", "initial_date="])
     except getopt.GetoptError as err:
         print(err)
         sys.exit(2)
@@ -150,6 +156,8 @@ def main():
             app_params[const.APP_PARAMS_LEAVING_DATE] = a
         elif o in ("-f", "--file"):
             app_params[const.APP_PARAMS_FILE_NAME] = a
+        elif o in ("-d", "--initial_date"):
+            app_params[const.APP_PARAMS_INITIAL_DATE] = a
         elif o in ("-a"):
             command = Command.addMember
         elif o in ("-i"):
@@ -163,11 +171,21 @@ def main():
             leaving_date = time.strptime(app_params[const.APP_PARAMS_LEAVING_DATE], "%Y-%m-%d")
         except ValueError as err:
             print("The format of leaving_date is incorrect[" + str(err) + "]")
-            sys.exit(2)    
+            sys.exit(2)
+    
+    initial_date = None
+    if app_params[const.APP_PARAMS_INITIAL_DATE] != None and app_params[const.APP_PARAMS_INITIAL_DATE] != "":
+        try:
+            initial_date = time.strptime(app_params[const.APP_PARAMS_INITIAL_DATE], "%Y-%m")
+        except ValueError as err:
+            print("The format of initial_date is incorrect[" + str(err) + "]")
+            sys.exit(2)
+    
         
     print("member_name = [" + app_params[const.APP_PARAMS_MEMBER_NAME] + "]")
     print("leaving_date = [" + app_params[const.APP_PARAMS_LEAVING_DATE] + "]")
     print("file_name = [" + app_params[const.APP_PARAMS_FILE_NAME] + "]")
+    print("initial_date = [" + app_params[const.APP_PARAMS_INITIAL_DATE] + "]")
 
     file_name = app_params[const.APP_PARAMS_FILE_NAME]
     if file_name == None or file_name == '':
@@ -183,7 +201,7 @@ def main():
     if command == Command.addMember:
         perform_add_member(book, app_params)
     elif command == Command.initial:
-        perform_initial_attendance(book, app_params[const.APP_PARAMS_MEMBER_NAME], leaving_date.tm_mon)
+        perform_initial_attendance(book, app_params[const.APP_PARAMS_MEMBER_NAME], initial_date.tm_year, initial_date.tm_month)
 
 
 
