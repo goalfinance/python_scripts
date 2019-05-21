@@ -91,6 +91,9 @@ def does_member_exist(workbook, member_name):
     except KeyError:
         return False
 
+"""
+Return a list of a tuple, the structure of the tuple is (weekday, day, isHoliday)
+"""
 def get_calendar_of_month(year, month):
     calendar_of_month = []
     days_of_month = calendar.monthrange(year, month)[1]
