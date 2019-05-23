@@ -32,7 +32,7 @@ const.EXCEL_WORKBOOK_MEMBER_SHEET_NAME = 'member list'
 const.EXCEL_TABLE_HEADER_MEMBER_NAME = 'Name'
 const.EXCEL_TABLE_HEADER_ATTENDANCE_DAYS = 'Attentance days of month'
 
-app_params = dict(member_name="", leaving_date="", file_name="")
+app_params = dict(member_name="", leaving_date="", file_name="",initial_date="")
 
 def month_to_str(month):
     month_str = str(month)
@@ -115,9 +115,24 @@ def create_table_header(worksheet, year, month):
     
     worksheet.append(headers)
 
-def insert_new_attendance_info(workbook, member_name, year, month):
+def insert_new_attendance_info(worksheet, member_name, year, month):
     calendar_of_month = get_calendar_of_month(year, month)
-    attendance_record = [member_name]
+    attendance_record = [member_name, 0]
+    for calendar_info in calendar_of_month:
+        #if it's holiday
+        if calendar_info[3] == True:
+            attendance_record.append(0)
+        else:
+            attendance_record.append(1)
+    worksheet.append(attendance_record)
+
+    #put the formula for calculating the attendance of the month to the cell
+    first_day_cell_coordinate = worksheet.cell(row=worksheet._current_row, column=3).coordinate
+    last_day_cel_coordinate = worksheet.cell(row=worksheet._current_row, column=worksheet.maxcolumn).coordinate
+    attendance_of_month_cell = worksheet.cell(row=worksheet._current_row, column=2)
+    formula_for_attendance = "=SUM(" + first_day_cell_coordinate + ":" + last_day_cel_coordinate + ")"
+    attendance_of_month_cell.value = formula_for_attendance
+    
 
     
     
@@ -135,7 +150,7 @@ def perform_initial_attendance(workbook, member_name, year, month):
         
         for row in month_sheet.rows:
             if re.search(member_name, row[0].value, re.IGNORECASE) == None:
-                pass
+                insert_new_attendance_info(month_sheet, member_name, year, month)
 
     workbook.save(app_params[const.APP_PARAMS_FILE_NAME])
 
