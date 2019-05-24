@@ -111,7 +111,7 @@ def create_table_header(worksheet, year, month):
     calendar_of_month = get_calendar_of_month(year, month)
     headers = [const.EXCEL_TABLE_HEADER_MEMBER_NAME, const.EXCEL_TABLE_HEADER_ATTENDANCE_DAYS]
     for calendar_info in calendar_of_month:
-        headers.append(calendar_info[2])
+        headers.append(calendar_info[1])
     
     worksheet.append(headers)
 
@@ -120,7 +120,7 @@ def insert_new_attendance_info(worksheet, member_name, year, month):
     attendance_record = [member_name, 0]
     for calendar_info in calendar_of_month:
         #if it's holiday
-        if calendar_info[3] == True:
+        if calendar_info[2] == True:
             attendance_record.append(0)
         else:
             attendance_record.append(1)
@@ -128,7 +128,7 @@ def insert_new_attendance_info(worksheet, member_name, year, month):
 
     #put the formula for calculating the attendance of the month to the cell
     first_day_cell_coordinate = worksheet.cell(row=worksheet._current_row, column=3).coordinate
-    last_day_cel_coordinate = worksheet.cell(row=worksheet._current_row, column=worksheet.maxcolumn).coordinate
+    last_day_cel_coordinate = worksheet.cell(row=worksheet._current_row, column=worksheet.max_column).coordinate
     attendance_of_month_cell = worksheet.cell(row=worksheet._current_row, column=2)
     formula_for_attendance = "=SUM(" + first_day_cell_coordinate + ":" + last_day_cel_coordinate + ")"
     attendance_of_month_cell.value = formula_for_attendance
@@ -139,18 +139,20 @@ def insert_new_attendance_info(worksheet, member_name, year, month):
 def perform_initial_attendance(workbook, member_name, year, month):
     month_sheet = get_month_sheet(workbook, month)
     if month_sheet == None:
-        month_sheet = workbook.create_sheet(month_to_str(month))
+        month_sheet = workbook.create_sheet(month_to_str(month)) 
     
-    if month_sheet.max_row <= 0:
+    if month_sheet.max_row <= 1:
         create_table_header(month_sheet, year, month)
-    else:
-        if does_member_exist(workbook, member_name) == False:
-            print("The member whose name is '" + member_name + "' doesn't exist in the member list, you can add member by option '-a'")
+
+    if does_member_exist(workbook, member_name) == False:
+        print("The member whose name is '" + member_name + "' doesn't exist in the member list, you can add member by option '-a'")
+        return
+    
+    for row in month_sheet.rows:
+        if re.search(member_name, row[0].value, re.IGNORECASE) != None:
             return
-        
-        for row in month_sheet.rows:
-            if re.search(member_name, row[0].value, re.IGNORECASE) == None:
-                insert_new_attendance_info(month_sheet, member_name, year, month)
+
+    insert_new_attendance_info(month_sheet, member_name, year, month)
 
     workbook.save(app_params[const.APP_PARAMS_FILE_NAME])
 
@@ -219,7 +221,7 @@ def main():
     if command == Command.addMember:
         perform_add_member(book, app_params)
     elif command == Command.initial:
-        perform_initial_attendance(book, app_params[const.APP_PARAMS_MEMBER_NAME], initial_date.tm_year, initial_date.tm_month)
+        perform_initial_attendance(book, app_params[const.APP_PARAMS_MEMBER_NAME], initial_date.tm_year, initial_date.tm_mon)
 
 
 
