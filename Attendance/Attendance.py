@@ -17,10 +17,17 @@ class _const:
         if name in self.__dict__:
             raise self.ConstError("Can't rebind const (%s)" %name)
         self.__dict__[name] = value
-class MissingParamsError(TypeError):
+class MissingParamsError(ValueError):
     pass
 
-class ExcelFileOperationError(TypeError):
+class IllegalParamsError(ValueError):
+    pass
+
+class MemberNotFoundError(ValueError):
+    pass
+
+
+class ExcelFileOperationError(ValueError):
     pass
 
 const = _const()
@@ -68,10 +75,25 @@ def get_previous_month_num():
         previous_month_num = 12
     return previous_month_num
 
-def perform_add_member(workbook, app_params):
+def validate_param_memeber_name(app_params):
     member_name = app_params[const.APP_PARAMS_MEMBER_NAME]
     if member_name == None or member_name == '':
-        raise MissingParamsError("The name of member you want to add is missing, please assigning it by using '-m', '--member_name'")
+        raise MissingParamsError("The name of member you want to add is missing, please assign it by using '-m' or '--member_name'")
+    return member_name
+
+def validate_param_initial_date(app_params):
+    initial_date = None
+    if app_params[const.APP_PARAMS_INITIAL_DATE] != None and app_params[const.APP_PARAMS_INITIAL_DATE] != "":
+        try:
+            initial_date = time.strptime(app_params[const.APP_PARAMS_INITIAL_DATE], "%Y-%m")
+            return initial_date
+        except ValueError as err:
+            raise IllegalParamsError("The value of '" + const.APP_PARAMS_INITIAL_DATE + "' is illegal, the correct format is '%Y-%m', for example, '2019-05'", err)
+    else:
+        raise MissingParamsError("Initial date is missing, please assign it by using '-d' or '--initial_date'")
+
+def perform_add_member(workbook, app_params):
+    member_name = validate_param_memeber_name(app_params)
     try:
         member_list_sheet = workbook.get_sheet_by_name(const.EXCEL_WORKBOOK_MEMBER_SHEET_NAME)
     except KeyError:
@@ -133,10 +155,12 @@ def insert_new_attendance_info(worksheet, member_name, year, month):
     formula_for_attendance = "=SUM(" + first_day_cell_coordinate + ":" + last_day_cel_coordinate + ")"
     attendance_of_month_cell.value = formula_for_attendance
     
+def perform_initial_attendance(workbook, app_params):
+    member_name = validate_param_memeber_name(app_params)
+    initial_date = validate_param_initial_date(app_params)
+    year = initial_date.tm_year
+    month = initial_date.tm_mon
 
-    
-    
-def perform_initial_attendance(workbook, member_name, year, month):
     month_sheet = get_month_sheet(workbook, month)
     if month_sheet == None:
         month_sheet = workbook.create_sheet(month_to_str(month)) 
@@ -145,8 +169,7 @@ def perform_initial_attendance(workbook, member_name, year, month):
         create_table_header(month_sheet, year, month)
 
     if does_member_exist(workbook, member_name) == False:
-        print("The member whose name is '" + member_name + "' doesn't exist in the member list, you can add member by option '-a'")
-        return
+        raise MemberNotFoundError("The member whose name is '" + member_name + "' doesn't exist in the member list, you can add member by option '-a'")
     
     for row in month_sheet.rows:
         if re.search(member_name, row[0].value, re.IGNORECASE) != None:
@@ -156,12 +179,7 @@ def perform_initial_attendance(workbook, member_name, year, month):
 
     workbook.save(app_params[const.APP_PARAMS_FILE_NAME])
 
-
-
-
-
 def main():
-    print(sys.argv[0])
     try:
         opts, args = getopt.getopt(sys.argv[1:], "airm:l:f:d:", ["member_name=", "leaving_date=", "file", "initial_date="])
     except getopt.GetoptError as err:
@@ -192,20 +210,6 @@ def main():
         except ValueError as err:
             print("The format of leaving_date is incorrect[" + str(err) + "]")
             sys.exit(2)
-    
-    initial_date = None
-    if app_params[const.APP_PARAMS_INITIAL_DATE] != None and app_params[const.APP_PARAMS_INITIAL_DATE] != "":
-        try:
-            initial_date = time.strptime(app_params[const.APP_PARAMS_INITIAL_DATE], "%Y-%m")
-        except ValueError as err:
-            print("The format of initial_date is incorrect[" + str(err) + "]")
-            sys.exit(2)
-    
-        
-    print("member_name = [" + app_params[const.APP_PARAMS_MEMBER_NAME] + "]")
-    print("leaving_date = [" + app_params[const.APP_PARAMS_LEAVING_DATE] + "]")
-    print("file_name = [" + app_params[const.APP_PARAMS_FILE_NAME] + "]")
-    print("initial_date = [" + app_params[const.APP_PARAMS_INITIAL_DATE] + "]")
 
     file_name = app_params[const.APP_PARAMS_FILE_NAME]
     if file_name == None or file_name == '':
@@ -217,12 +221,14 @@ def main():
     else:
         book = openpyxl.Workbook(write_only=True)
         book.save(file_name)
-    
-    if command == Command.addMember:
-        perform_add_member(book, app_params)
-    elif command == Command.initial:
-        perform_initial_attendance(book, app_params[const.APP_PARAMS_MEMBER_NAME], initial_date.tm_year, initial_date.tm_mon)
-
+    try:
+        if command == Command.addMember:
+            perform_add_member(book, app_params)
+        elif command == Command.initial:
+            perform_initial_attendance(book, app_params)
+    except ValueError as err:
+        print(err)
+        sys.exit(2)
 
 
 
