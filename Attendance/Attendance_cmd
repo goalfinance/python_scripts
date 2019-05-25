@@ -2,4 +2,6 @@ python3 Attendance.py -a -m Theon -f test.xlsx
 
 python3 Attendance.py -i --member_name Thoen -d 2019-05 -f test.xlsx
 
+python3 Attendance.py -r --member_name Thoen -l 2019-05-05 -f test.xlsx
+
 python3 -m pdb Attendance.py -i --member_name Thoen -d 2019-05 -f test.xlsx
