@@ -26,6 +26,8 @@ class IllegalParamsError(ValueError):
 class MemberNotFoundError(ValueError):
     pass
 
+class IncorrectOperationError(ValueError):
+    pass
 
 class ExcelFileOperationError(ValueError):
     pass
@@ -50,7 +52,7 @@ def month_to_str(month):
 #Check if the sheet for the month exists
 def does_monsheet_exist(workbook, mon):
     month_str = month_to_str(mon)
-    sheet_names = workbook.get_sheet_names()
+    sheet_names = workbook.sheetnames
     for sheet_name in sheet_names:
         if sheet_name == month_str:
             return True
@@ -60,7 +62,7 @@ def does_monsheet_exist(workbook, mon):
 def get_month_sheet(workbook, mon):
     month_str = month_to_str(mon)
     if does_monsheet_exist(workbook, mon) == True:
-        return workbook.get_sheet_by_name(month_str)
+        return workbook[month_str]
     else:
         return None
 
@@ -92,6 +94,18 @@ def validate_param_initial_date(app_params):
     else:
         raise MissingParamsError("Initial date is missing, please assign it by using '-d' or '--initial_date'")
 
+def validate_param_leaving_date(app_params):
+    leaving_date = None
+    if app_params[const.APP_PARAMS_LEAVING_DATE] != None and app_params[const.APP_PARAMS_LEAVING_DATE] != "":
+        try:
+            leaving_date = time.strptime(app_params[const.APP_PARAMS_LEAVING_DATE], "%Y-%m-%d")
+            return leaving_date
+        except ValueError as err:
+            raise IllegalParamsError("The value of '" + const.APP_PARAMS_LEAVING_DATE + "' is illegal, the correct format is '%Y-%m-%d', for example, '2019-05-15'", err)
+    else:
+        raise MissingParamsError("Leaving date is missing, please assign it by using '-l' or '--leaving_date'")    
+            
+
 def perform_add_member(workbook, app_params):
     member_name = validate_param_memeber_name(app_params)
     try:
@@ -105,7 +119,7 @@ def perform_add_member(workbook, app_params):
 
 def does_member_exist(workbook, member_name):
     try:
-        member_list_sheet = workbook.get_sheet_by_name(const.EXCEL_WORKBOOK_MEMBER_SHEET_NAME)
+        member_list_sheet = workbook[const.EXCEL_WORKBOOK_MEMBER_SHEET_NAME]
         for row in member_list_sheet.rows:
             if re.search(member_name, row[0].value, re.IGNORECASE) != None:
                 return True
@@ -179,6 +193,30 @@ def perform_initial_attendance(workbook, app_params):
 
     workbook.save(app_params[const.APP_PARAMS_FILE_NAME])
 
+def perform_record_leaving(workbook, app_params):
+    member_name = validate_param_memeber_name(app_params)
+    leaving_date = validate_param_leaving_date(app_params)
+    month = leaving_date.tm_mon
+    month_day = leaving_date.tm_mday
+    mday_column_index = month_day + 1
+
+    month_sheet = get_month_sheet(workbook, month)
+    if month_sheet == None or month_sheet.max_row <= 1:
+        raise IncorrectOperationError("Incorrect operation, you need do the initial operation first.")
+
+    if does_member_exist(workbook, member_name) == False:
+        raise MemberNotFoundError("The member whose name is '" + member_name + "' doesn't exist in the member list, you can add member by option '-a'")
+    
+    recording_flag = False
+    for row in month_sheet.rows:
+        if re.search(member_name, row[0].value, re.IGNORECASE) != None:
+            row[mday_column_index].value = 0
+            recording_flag = True
+    if recording_flag == False:
+        raise IncorrectOperationError("Incorrect operation, did not find the member[" + member_name + "]'s attendance, need to initial it first.")
+    else:
+        workbook.save(app_params[const.APP_PARAMS_FILE_NAME])
+
 def main():
     try:
         opts, args = getopt.getopt(sys.argv[1:], "airm:l:f:d:", ["member_name=", "leaving_date=", "file", "initial_date="])
@@ -203,13 +241,7 @@ def main():
         elif o in ("-r"):
             command = Command.recordLeaving
     
-    leaving_date = None
-    if app_params[const.APP_PARAMS_LEAVING_DATE] != None and app_params[const.APP_PARAMS_LEAVING_DATE] != "":
-        try:
-            leaving_date = time.strptime(app_params[const.APP_PARAMS_LEAVING_DATE], "%Y-%m-%d")
-        except ValueError as err:
-            print("The format of leaving_date is incorrect[" + str(err) + "]")
-            sys.exit(2)
+    
 
     file_name = app_params[const.APP_PARAMS_FILE_NAME]
     if file_name == None or file_name == '':
@@ -226,6 +258,9 @@ def main():
             perform_add_member(book, app_params)
         elif command == Command.initial:
             perform_initial_attendance(book, app_params)
+        elif command == Command.recordLeaving:
+            perform_record_leaving(book, app_params)
+        
     except ValueError as err:
         print(err)
         sys.exit(2)
