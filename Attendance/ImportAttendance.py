@@ -25,6 +25,13 @@ def main():
     except GetoptError as opt_error:
         print(opt_error)
         exit(2)
+
+    for o, a in opts:
+        if o in ("-s", "--source"):
+            app_params[const.APP_PARAMS_SOURCE_FILE] = a
+        elif o in ("-t", "--target"):
+            app_params[const.APP_PARAMS_TARGET_FILE] = a
+    
     
 
     
