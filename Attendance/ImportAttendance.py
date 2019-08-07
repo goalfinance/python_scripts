@@ -11,6 +11,9 @@ const.APP_PARAMS_SOURCE_FILE = "source"
 const.APP_PARAMS_TARGET_FILE = "target"
 const.APP_PARAMS_MONTH = "month"
 
+def getMembersAttendance(workbook):
+    pass
+
 def main():
     try:
         opts, args = getopt(sys.argv[1:], "s:t:m:", [const.APP_PARAMS_SOURCE_FILE, const.APP_PARAMS_TARGET_FILE, const.APP_PARAMS_MONTH])
