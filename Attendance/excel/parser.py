@@ -33,5 +33,4 @@ def source_attendance_group_by_member(source_workbook, month):
         return None
     source_attendances = []
     for row in month_sheet.rows:
-        
-
+        pass
