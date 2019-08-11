@@ -5,7 +5,7 @@ from goalfinance.utils.utils import Const
 from excel.parser import load_workbook
 
 
-app_params = dict(source="", target="")
+app_params = dict()
 const = Const()
 const.APP_PARAMS_SOURCE_FILE = "source"
 const.APP_PARAMS_TARGET_FILE = "target"
@@ -26,7 +26,7 @@ def main():
             app_params[const.APP_PARAMS_SOURCE_FILE] = a
         elif o in ("-t", "--target"):
             app_params[const.APP_PARAMS_TARGET_FILE] = a
-        elif o in ("-m", "-month"):
+        elif o in ("-m", "--month"):
             app_params[const.APP_PARAMS_MONTH] = a
     
     if load_workbook(app_params[const.APP_PARAMS_SOURCE_FILE]) == None:
@@ -38,6 +38,9 @@ def main():
         sys.exit(2)
     if app_params[const.APP_PARAMS_MONTH] == None:
         print("The month of attendance should not be absent, please assigning it by using '-m' or '--month'")
+
+if __name__ == "__main__":
+    main()
 
 
     
