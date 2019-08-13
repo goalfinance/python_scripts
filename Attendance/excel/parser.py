@@ -74,7 +74,7 @@ def get_attendance_matrix(source_workbook, year, month):
                         is_merged_cell = type(cell) is openpyxl.cell.cell.MergedCell
                         if is_merged_cell == False and cell.value != None and re.search("^absen[a-z]*$", cell.value, re.IGNORECASE) != None:
                             matrix[x, y] = 100
-                        elif is_merged_cell == False and cell.value != None and re.search("^absen[a-z]*[ ]* half day", cell.value, re.IGNORECASE) != None:
+                        elif is_merged_cell == False and cell.value != None and re.search("^absen[a-z]*[ ]*half day", cell.value, re.IGNORECASE) != None:
                             matrix[x, y] = 50
                         elif is_merged_cell or cell.value != None:
                             matrix[x, y] = 1
