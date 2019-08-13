@@ -34,8 +34,12 @@ def source_attendance_group_by_member(source_workbook, month):
     if month_sheet == None:
         return None
     source_attendances = dict()
+    i = 0
     for row in month_sheet.rows:
-        member_name = row[1].value
+        if i == 0:
+            i += 1
+            continue
+        member_name = row[2].value
         members_attendances_records = []
         if member_name not in source_attendances:
             source_attendances[member_name] = []
@@ -47,6 +51,7 @@ def source_attendance_group_by_member(source_workbook, month):
                 source_attendances[member_name] = members_attendances_records
 
         members_attendances_records.append(row)
+        
     
     attendances_matrix = dict()
 
@@ -56,15 +61,23 @@ def source_attendance_group_by_member(source_workbook, month):
         if source_attendances[member_name] != None:
             row_cnt = len(source_attendances[member_name])
             if row_cnt > 0:
-                matrix = np.zeros((row_cnt, column_cnt - 2))
+                matrix = np.zeros((row_cnt, 31))
                 attendances_matrix[member_name] = matrix
                 x = 0
                 for row in source_attendances[member_name]:
                     y = 0
-                    for column_number in range(2, column_cnt - 1):
-                        if row[column_number].value != None and re.search("absen*", row[column_number].value, re.IGNORECASE) != None:
+                    for column_number in range(3, 34):
+                        cell = row[column_number]
+                        is_merged_cell = type(cell) is openpyxl.cell.cell.MergedCell
+                        if is_merged_cell == False and cell.value != None and re.search("^absen[a-z]*$", cell.value, re.IGNORECASE) != None:
+                            matrix[x, y] = 100
+                        elif is_merged_cell == False and cell.value != None and re.search("^absen[a-z]*[ ]* half day", cell.value, re.IGNORECASE) != None:
+                            matrix[x, y] = 50
+                        elif is_merged_cell or cell.value != None:
                             matrix[x, y] = 1
+                       
                         y += 1
+
                     x += 1
     
     return attendances_matrix
