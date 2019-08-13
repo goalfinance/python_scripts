@@ -3,6 +3,7 @@ import os
 from goalfinance.utils.calendar import month_to_str
 import numpy as np
 import re
+from calendar import monthrange
 
 def load_workbook(file_path):
     if file_path == None:
@@ -29,7 +30,7 @@ def get_month_sheet(workbook, mon):
     else:
         return None
 
-def source_attendance_group_by_member(source_workbook, month):
+def get_attendance_matrix(source_workbook, year, month):
     month_sheet = get_month_sheet(source_workbook, month)
     if month_sheet == None:
         return None
@@ -40,6 +41,8 @@ def source_attendance_group_by_member(source_workbook, month):
             i += 1
             continue
         member_name = row[2].value
+        if member_name == None:
+            continue
         members_attendances_records = []
         if member_name not in source_attendances:
             source_attendances[member_name] = []
@@ -57,16 +60,16 @@ def source_attendance_group_by_member(source_workbook, month):
 
     for member_name in list(source_attendances):
         row_cnt = 0
-        column_cnt = month_sheet.max_column
+        days_of_month = monthrange(year, month)[1]
         if source_attendances[member_name] != None:
             row_cnt = len(source_attendances[member_name])
             if row_cnt > 0:
-                matrix = np.zeros((row_cnt, 31))
+                matrix = np.zeros((row_cnt, days_of_month))
                 attendances_matrix[member_name] = matrix
                 x = 0
                 for row in source_attendances[member_name]:
                     y = 0
-                    for column_number in range(3, 34):
+                    for column_number in range(3, days_of_month + 3):
                         cell = row[column_number]
                         is_merged_cell = type(cell) is openpyxl.cell.cell.MergedCell
                         if is_merged_cell == False and cell.value != None and re.search("^absen[a-z]*$", cell.value, re.IGNORECASE) != None:
