@@ -30,7 +30,7 @@ def get_month_sheet(workbook, mon):
     else:
         return None
 
-def get_attendance_matrix(source_workbook, year, month):
+def get_attendances_matrix(source_workbook, year, month):
     month_sheet = get_month_sheet(source_workbook, month)
     if month_sheet == None:
         return None
@@ -58,9 +58,9 @@ def get_attendance_matrix(source_workbook, year, month):
     
     attendances_matrix = dict()
 
+    days_of_month = monthrange(year, month)[1]
     for member_name in list(source_attendances):
-        row_cnt = 0
-        days_of_month = monthrange(year, month)[1]
+        row_cnt = 0       
         if source_attendances[member_name] != None:
             row_cnt = len(source_attendances[member_name])
             if row_cnt > 0:
@@ -82,9 +82,13 @@ def get_attendance_matrix(source_workbook, year, month):
                         y += 1
 
                     x += 1
-    
-    return attendances_matrix
-
-
-           
-
+    attendances_matrix_compressed = dict()
+    for member_name in list(attendances_matrix):
+        attendances_matrix_per_member_compressed = np.zeros(days_of_month)
+        attendances_matrix_compressed[member_name] = attendances_matrix_per_member_compressed
+        attendances_matrix_per_member = attendances_matrix[member_name]
+        
+        attendances_matrix_per_member_transposed = attendances_matrix_per_member.T
+        for i in range(0,days_of_month):
+            attendances_matrix_per_member_compressed[i] = np.max(attendances_matrix_per_member_transposed[i])
+    return attendances_matrix_compressed

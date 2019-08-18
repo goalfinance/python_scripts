@@ -1,15 +1,14 @@
 import unittest
 from excel.parser import * 
+import numpy as np
 
 class TestParser(unittest.TestCase):
     """Test parser.py"""
     def test_parse_source_file(self):
         source_workbook = load_workbook("source_attendance.xlsx")
-        attendance_group_by_member = get_attendance_matrix(source_workbook, 2019, 7)
+        attendances_matrix = get_attendances_matrix(source_workbook, 2019, 7)
 
-        print(attendance_group_by_member)
-        
-
+        print(attendances_matrix)
 
 if __name__ == "__main__":
     unittest.main()
