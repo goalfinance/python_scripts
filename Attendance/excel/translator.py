@@ -12,7 +12,7 @@ table_title_const.EXCEL_TABLE_HEADER_MEMBER_NAME = 'Name'
 table_title_const.EXCEL_TABLE_HEADER_ATTENDANCE_DAYS = 'Attentance days of month'
 
 def load_workbook(file_path):
-    if file_path == None:
+    if file_path == None or file_path == "":
         return None
     if (os.path.exists(file_path)):
         return openpyxl.load_workbook(file_path)
@@ -144,5 +144,18 @@ def fill_attendances_matrix_to_target_worksheet(worksheet, attendances_matrix, m
             attendance_of_month_cell = worksheet.cell(row=worksheet._current_row, column=2)
             formula_for_attendance = "=SUM(" + first_day_cell_coordinate + ":" + last_day_cel_coordinate + ")"
             attendance_of_month_cell.value = formula_for_attendance
+
+def translate(source_workbook, target_workbook, trans_date):
+    year = trans_date.tm_year
+    month = trans_date.tm_month
+    attendances_matrix, members_full_name = get_attendances_matrix(source_workbook, year, month)
+    target_month_sheet = get_month_sheet(target_workbook, month)
+    if target_month_sheet == None:
+        target_month_sheet = target_workbook.create_sheet(month_to_str(month)) 
+    
+    if target_month_sheet.max_row <= 1:
+        create_table_header(target_month_sheet, year, month)
+    
+    fill_attendances_matrix_to_target_worksheet(target_month_sheet, attendances_matrix, members_full_name, year, month)
 
 

@@ -5,3 +5,5 @@ python3 Attendance.py -i --member_name Thoen -d 2019-05 -f test.xlsx
 python3 Attendance.py -r --member_name Thoen -l 2019-05-05 -f test.xlsx
 
 python3 -m pdb Attendance.py -i --member_name Thoen -d 2019-05 -f test.xlsx
+
+python ImportAttendance.py -s source_attendance.xlsx -m 2019-07
