@@ -2,7 +2,7 @@ from getopt import getopt
 from getopt import GetoptError
 import sys
 from goalfinance.utils.utils import Const
-from excel.parser import load_workbook
+from excel.translator import load_workbook
 
 
 app_params = dict()

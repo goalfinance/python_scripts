@@ -4,6 +4,12 @@ from goalfinance.utils.calendar import month_to_str
 import numpy as np
 import re
 from calendar import monthrange
+from goalfinance.utils.utils import Const
+
+
+table_title_const = Const()
+table_title_const.EXCEL_TABLE_HEADER_MEMBER_NAME = 'Name'
+table_title_const.EXCEL_TABLE_HEADER_ATTENDANCE_DAYS = 'Attentance days of month'
 
 def load_workbook(file_path):
     if file_path == None:
@@ -40,35 +46,40 @@ def get_attendances_matrix(source_workbook, year, month):
         if i == 0:
             i += 1
             continue
-        member_name = row[2].value
-        if member_name == None:
+        member_id = row[2].value
+        if member_id == None:
             continue
         members_attendances_records = []
-        if member_name not in source_attendances:
-            source_attendances[member_name] = []
-            members_attendances_records = source_attendances[member_name]
+        if member_id not in source_attendances:
+            source_attendances[member_id] = []
+            members_attendances_records = source_attendances[member_id]
         else:
-            members_attendances_records = source_attendances[member_name]
+            members_attendances_records = source_attendances[member_id]
             if members_attendances_records == None:
                 members_attendances_records = []
-                source_attendances[member_name] = members_attendances_records
+                source_attendances[member_id] = members_attendances_records
 
         members_attendances_records.append(row)
         
     
     attendances_matrix = dict()
-
+    members_full_name = dict()
     days_of_month = monthrange(year, month)[1]
-    for member_name in list(source_attendances):
+    """
+    Group the attendances information by member
+    """
+    for member_id in list(source_attendances):
         row_cnt = 0       
-        if source_attendances[member_name] != None:
-            row_cnt = len(source_attendances[member_name])
+        if source_attendances[member_id] != None:
+            row_cnt = len(source_attendances[member_id])
             if row_cnt > 0:
                 matrix = np.zeros((row_cnt, days_of_month))
-                attendances_matrix[member_name] = matrix
+                attendances_matrix[member_id] = matrix
                 x = 0
-                for row in source_attendances[member_name]:
+                for row in source_attendances[member_id]:
                     y = 0
+                    if member_id not in members_full_name and row[1].value != None:
+                        members_full_name[member_id] = row[1].value
                     for column_number in range(3, days_of_month + 3):
                         cell = row[column_number]
                         is_merged_cell = type(cell) is openpyxl.cell.cell.MergedCell
@@ -82,13 +93,17 @@ def get_attendances_matrix(source_workbook, year, month):
                         y += 1
 
                     x += 1
+    """
+    Combine the attendances information of each member into one record.
+    """
     attendances_matrix_compressed = dict()
-    for member_name in list(attendances_matrix):
+    for member_id in list(attendances_matrix):
         attendances_matrix_per_member_compressed = np.zeros(days_of_month)
-        attendances_matrix_compressed[member_name] = attendances_matrix_per_member_compressed
-        attendances_matrix_per_member = attendances_matrix[member_name]
+        attendances_matrix_compressed[member_id] = attendances_matrix_per_member_compressed
+        attendances_matrix_per_member = attendances_matrix[member_id]
         
         attendances_matrix_per_member_transposed = attendances_matrix_per_member.T
-        for i in range(0,days_of_month):
+        for i in range(0, days_of_month):
             attendances_matrix_per_member_compressed[i] = np.max(attendances_matrix_per_member_transposed[i])
-    return attendances_matrix_compressed
+            
+    return attendances_matrix_compressed, members_full_name
