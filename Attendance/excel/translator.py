@@ -122,7 +122,7 @@ def fill_attendances_matrix_to_target_worksheet(worksheet, attendances_matrix, m
         member_full_name = members_full_name[member_id]
         
         attendance_matrix = attendances_matrix[member_id]
-        if attendance_matrix != None and np.size(attendance_matrix) == len(calendar_of_month):
+        if np.size(attendance_matrix) == len(calendar_of_month):
             if member_full_name == None:
                 member_full_name = member_id
             attendance_record = [member_full_name, 0]
@@ -133,8 +133,10 @@ def fill_attendances_matrix_to_target_worksheet(worksheet, attendances_matrix, m
                     attendance_record.append(0)
                 elif attendance_value == 50:
                     attendance_record.append(0.5)
-                else:
+                elif attendance_value == 1:
                     attendance_record.append(1)
+                else:
+                    attendance_record.append(0)
 
             worksheet.append(attendance_record)
 
@@ -147,15 +149,12 @@ def fill_attendances_matrix_to_target_worksheet(worksheet, attendances_matrix, m
 
 def translate(source_workbook, target_workbook, trans_date):
     year = trans_date.tm_year
-    month = trans_date.tm_month
+    month = trans_date.tm_mon
     attendances_matrix, members_full_name = get_attendances_matrix(source_workbook, year, month)
     target_month_sheet = get_month_sheet(target_workbook, month)
     if target_month_sheet == None:
         target_month_sheet = target_workbook.create_sheet(month_to_str(month)) 
-    
-    if target_month_sheet.max_row <= 1:
         create_table_header(target_month_sheet, year, month)
-    
-    fill_attendances_matrix_to_target_worksheet(target_month_sheet, attendances_matrix, members_full_name, year, month)
+        fill_attendances_matrix_to_target_worksheet(target_month_sheet, attendances_matrix, members_full_name, year, month)
 
 

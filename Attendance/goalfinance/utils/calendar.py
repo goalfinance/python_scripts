@@ -9,11 +9,11 @@ def get_calendar_of_month(year, month):
     days_of_month = monthrange(year, month)[1]
     for i in range(1, days_of_month + 1):
         calendar_info = ()
-        weekday = weekday(year, month, i)
+        week_day = weekday(year, month, i)
         isHoliday = False
-        if weekday in [5, 6]:
+        if week_day in [5, 6]:
             isHoliday = True
-        calendar_info = weekday, i, isHoliday
+        calendar_info = week_day, i, isHoliday
         calendar_of_month.append(calendar_info)
     return calendar_of_month
 
